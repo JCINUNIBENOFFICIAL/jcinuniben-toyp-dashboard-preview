@@ -1,6 +1,8 @@
 name: Deploy dashboard preview to GitHub Pages
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +12,7 @@ permissions:
 
 concurrency:
   group: preview-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -24,6 +26,9 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
+          name: preview-site
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: preview-site
