@@ -434,6 +434,20 @@ navItems.forEach(item => {
         }
     });
 
+    // Fetch every matching row in bounded pages so Supabase's default row cap
+    // cannot silently truncate dashboard statistics.
+    async function fetchAllRows(buildQuery, pageSize = 1000) {
+        const rows = [];
+        for (let from = 0; ; from += pageSize) {
+            const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+            if (error) throw error;
+            const page = data || [];
+            rows.push(...page);
+            if (page.length < pageSize) break;
+        }
+        return rows;
+    }
+
     // helper to load overview data
     async function loadOverview() {
         contentArea.innerHTML = await getViewMarkup('overview');
@@ -441,15 +455,16 @@ navItems.forEach(item => {
         const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
         document.getElementById('refresh-dashboard')?.addEventListener('click', loadOverview);
         try {
-            const [n,c,verified,setting] = await Promise.all([
+            const [n,c,verified,pending,setting] = await Promise.all([
                 supabase.from('nominations').select('id', {count:'exact',head:true}),
                 supabase.from('categories').select('id', {count:'exact',head:true}),
                 supabase.from('nominations').select('id', {count:'exact',head:true}).eq('status','verified'),
+                supabase.from('nominations').select('id', {count:'exact',head:true}).eq('status','pending'),
                 supabase.from('settings').select('key,value').eq('key','voting_open').maybeSingle()
             ]);
-            const failed=[n,c,verified,setting].find(result=>result.error); if(failed)throw failed.error;
+            const failed=[n,c,verified,pending,setting].find(result=>result.error); if(failed)throw failed.error;
             setText('stat-total-nominations',n.count??0); setText('stat-categories',c.count??0);
-            setText('stat-verified',verified.count??0); setText('stat-pending',Math.max(0,(n.count??0)-(verified.count??0)));
+            setText('stat-verified',verified.count??0); setText('stat-pending',pending.count??0);
             const open=String(setting.data?.value).toLowerCase()==='true';
             setText('stat-voting-status',open?'Open':'Closed'); setText('portal-status',open?'Open':'Closed');
             setText('db-status','Connected');
@@ -585,26 +600,41 @@ navItems.forEach(item => {
             return;
         }
 
-        // Fetch nomination counts per category (for the "Entries" column)
-        let categoryCounts = {};
+        const normalizeCategory = value => String(value || '').trim().toLocaleLowerCase();
+        const officialCategories = new Map((cats || []).map(cat => [normalizeCategory(cat.name), cat.name]));
+        const categoryCounts = {};
+        let categoryCountsAvailable = true;
         try {
-            const { data: allNominations, error: nomErr } = await supabase
-                .from('nominations')
-                .select('category');
-            if (!nomErr && allNominations) {
-                allNominations.forEach(function (nom) {
-                    const cat = nom.category || 'Uncategorized';
-                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-                });
+            const allNominations = await fetchAllRows(() => supabase.from('nominations').select('category'));
+            const unmatchedCategoryCounts = {};
+            allNominations.forEach(nom => {
+                const rawCategory = String(nom.category || '').trim();
+                if (!rawCategory) {
+                    unmatchedCategoryCounts['Uncategorized'] = (unmatchedCategoryCounts['Uncategorized'] || 0) + 1;
+                    return;
+                }
+                const officialName = officialCategories.get(normalizeCategory(rawCategory));
+                if (!officialName) {
+                    unmatchedCategoryCounts[rawCategory] = (unmatchedCategoryCounts[rawCategory] || 0) + 1;
+                    return;
+                }
+                categoryCounts[officialName] = (categoryCounts[officialName] || 0) + 1;
+            });
+            const note = document.getElementById('category-data-quality-note');
+            if (note) {
+                const unmatchedTotal = Object.values(unmatchedCategoryCounts).reduce((sum, count) => sum + count, 0);
+                note.textContent = unmatchedTotal
+                    ? `${unmatchedTotal} nomination(s) use category labels outside the official list: ${Object.entries(unmatchedCategoryCounts).map(([name, count]) => `${name} (${count})`).join(', ')}. These records have not been changed.`
+                    : 'All nomination category labels match the official categories.';
+                note.style.color = unmatchedTotal ? '#b45309' : 'var(--text-muted)';
             }
         } catch (e) {
-            console.warn('Could not fetch nomination counts', e);
+            categoryCountsAvailable = false;
+            console.error('Could not fetch complete nomination counts', e);
+            const note = document.getElementById('category-data-quality-note');
+            if (note) { note.textContent = 'Nomination category counts are unavailable. Refresh or check database access.'; note.style.color = '#b91c1c'; }
         }
-
-        // Attach the count to each category object
-        cats.forEach(function (cat) {
-            cat._entries = categoryCounts[cat.name] || 0;
-        });
+        cats.forEach(function (cat) { cat._entries = categoryCountsAvailable ? (categoryCounts[cat.name] || 0) : null; });
 
         // Store globally
         window.__ALL_CATEGORIES__ = cats;
@@ -638,7 +668,7 @@ navItems.forEach(item => {
         document.getElementById('total-categories').textContent = total;
         document.getElementById('visible-categories').textContent = visibleCount;
         document.getElementById('hidden-categories').textContent = hiddenCount;
-        document.getElementById('total-category-entries').textContent = cats.reduce((sum, cat) => sum + (cat._entries || 0), 0);
+        document.getElementById('total-category-entries').textContent = categoryCountsAvailable ? cats.reduce((sum, cat) => sum + (cat._entries || 0), 0) : 'Unavailable';
 
         // Render table
         tbody.innerHTML = '';
@@ -750,16 +780,27 @@ navItems.forEach(item => {
 
     async function loadFinalists() {
         // Fetch categories and finalists
-        const [{ data: categories, error: catErr }, { data: finalists, error: finErr }] = await Promise.all([
+        const [{ data: categories, error: catErr }, finalistResult, approvedResult] = await Promise.all([
             supabase.from('categories').select('*').order('display_order', { ascending: true }),
-            supabase.from('nominations').select('*').eq('stage', 'finalist')
+            fetchAllRows(() => supabase.from('nominations').select('*').eq('stage', 'finalist').order('id', { ascending: true }))
+                .then(data => ({ data, error: null })).catch(error => ({ data: null, error })),
+            supabase.from('finalists').select('id', { count: 'exact', head: true })
         ]);
 
         if (catErr) console.error('Failed to load categories', catErr);
-        if (finErr) console.error('Failed to load finalists', finErr);
-
+        if (finalistResult.error) console.error('Failed to load all finalist-stage nominations', finalistResult.error);
         const cats = categories || [];
-        const finalistList = finalists || [];
+        const finalistList = finalistResult.data || [];
+        const finalistNote = document.getElementById('finalist-data-quality-note');
+        if (finalistNote) {
+            if (finalistResult.error || approvedResult.error) {
+                finalistNote.textContent = 'Finalist counts are incomplete because one of the database queries failed. Please refresh or check database access.';
+                finalistNote.style.color = '#b91c1c';
+            } else {
+                finalistNote.textContent = `Nomination records marked as finalist stage: ${finalistList.length.toLocaleString()}. Approved records in the finalists table: ${(approvedResult.count || 0).toLocaleString()}. These are different measures; a finalist-stage nomination is not automatically an approved finalist.`;
+                finalistNote.style.color = '#b45309';
+            }
+        }
 
         // Render category cards
         const container = document.getElementById('category-cards-container');
@@ -800,8 +841,12 @@ navItems.forEach(item => {
             }
         }
 
-        // Render finalist table
-        renderFinalistTable(finalistList);
+        if (finalistResult.error) {
+            const finalistBody = document.getElementById('finalist-table-body');
+            if (finalistBody) finalistBody.innerHTML = '<tr><td colspan="5" style="padding:15px;text-align:center;color:#b91c1c;">Could not load the complete finalist-stage list.</td></tr>';
+        } else {
+            renderFinalistTable(finalistList);
+        }
 
         // inside loadFinalists, after renderFinalistTable(finalistList);
         const finalizeBtn = document.getElementById('finalize-notify-btn');
