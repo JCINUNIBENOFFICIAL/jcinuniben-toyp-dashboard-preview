@@ -201,7 +201,9 @@
 
                         <div class="profile-info">
 
-                            <span class="user-name">Demo Administrator</span>
+                            <span class="user-name">
+                                Admin User
+                            </span>
 
                             <img
                                 src="https://ui-avatars.com/api/?name=Admin+User&background=0097D7&color=fff"
@@ -274,7 +276,7 @@
 
                     <p>
 
-                        Loading the interactive demonstration.
+                        Fetching the latest data from the server...
 
                     </p>
 
@@ -401,7 +403,17 @@
             SUPABASE CONFIG
     ========================== -->
 
-    <script src="./scripts.js"></script>
+    <script>
+
+        window.SUPABASE_URL =
+        "https://xbrndlhzaluksjhdbnur.supabase.co";
+
+        window.SUPABASE_ANON_KEY =
+        "sb_publishable_0kunmksX8TRkAMaVZeEcRg_BVe2B9Yv";
+
+    </script>
+
+    <script type="module" src="./scripts.js"></script>
     
 </body>
 </html>
