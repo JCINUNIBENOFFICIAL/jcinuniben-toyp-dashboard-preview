@@ -1,0 +1,75 @@
+<template>
+    <div class="view-header">
+        <h1>Nominee Management</h1>
+        <div class="header-actions">
+            <button id="export-nominations-btn" class="btn-primary" style="font-size: 12px;">
+                <i class='bx bx-export'></i> Export All
+            </button>
+            <button id="export-filtered-nominations-btn" class="btn-secondary" style="margin-left: 8px; font-size: 12px;">
+                <i class='bx bx-filter-alt'></i> Export Filtered
+            </button>
+            <button id="show-merge-suggestions-btn" class="btn-secondary" style="margin-left: 10px;">
+    <i class='bx bx-git-merge'></i> Merge Suggestions
+</button>
+        </div>
+    </div>
+
+    <!-- Filter card (same as before, but we'll use them for grouped data) -->
+    <div class="card" style="margin-bottom: 20px; padding: 15px;">
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 5px;">
+                    SEARCH NOMINEE
+                </label>
+                <input type="text" id="name-search" placeholder="Type a name…" 
+                    style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--bg-slate); background: white; font-size: 14px;">
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 5px;">
+                    FILTER BY CATEGORY
+                </label>
+                <select id="category-filter" class="filter-select" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--bg-slate); background: white;">
+                    <option value="all">All Categories</option>
+                    <!-- keep your category options -->
+                    <option value="Business and Entrepreneurial Excellence">Business and Entrepreneurial Excellence</option>
+                    <!-- ... all the others ... -->
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 5px;">
+                    FILTER BY STATUS
+                </label>
+                <select id="status-filter" class="filter-select" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--bg-slate); background: white;">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="verified">Verified</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: flex-end; height: 100%;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button id="apply-filters-btn" class="view-btn" style="padding: 9px 20px;">Apply Filters</button>
+                    <button id="clear-nomination-filters-btn" class="btn-secondary" style="padding: 9px 14px;">Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grouped table -->
+    <div class="card">
+        <div class="table-responsive">
+            <table style="width: 100%; text-align: left; border-collapse: collapse; min-width: 650px;">
+                <thead>
+                    <tr style="font-size: 11px; color: var(--text-muted); border-bottom: 2px solid var(--bg-slate);">
+                        <th style="padding: 12px;">NOMINEE NAME</th>
+                        <th style="padding: 12px;">SUBMISSIONS</th>
+                        <th style="padding: 12px;">LAST SUBMITTED</th>
+                        <th style="padding: 12px;">ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="nominees-grouped-tbody">
+                    <tr><td colspan="4" style="padding:15px; color:var(--text-muted); text-align:center;">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</template>
