@@ -342,6 +342,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update your Click Listener for Voting
     // Event Delegation
     document.addEventListener('click', async (e) => {
+        // Hard-stop all legacy bulk identity edits and merge actions before their handlers run.
+        if (e.target.closest('#edit-finalist-profile-btn, #save-finalist-details-btn, .manual-merge-btn, #execute-manual-merge-btn, .merge-group-btn, .remove-variant-btn')) {
+            e.preventDefault();
+            alert('Merge and bulk nominee identity edits are disabled. Original nomination records must remain unchanged.');
+            return;
+        }
         const banner = document.getElementById('voting-banner');
         const statusLabel = document.getElementById('v-status');
 
@@ -2116,7 +2122,7 @@ async function sendInvitationsToFinalists() {
 
 // Read-only multiple-nomination tracking. This feature never updates nomination rows.
 function normalizeNomineeName(value = '') {
-    return String(value || '').trim().toLocaleLowerCase().replace(/\\s+/g, ' ');
+    return String(value || '').trim().toLocaleLowerCase().replace(/\s+/g, ' ');
 }
 
 function showMultipleNominations() {
@@ -2148,7 +2154,7 @@ function showMultipleNominations() {
         <div style="max-height:480px; overflow-y:auto;">
             ${groups.map((group, index) => {
                 const emails = new Set(group.records.map(r => String(r.nominee_email || r.primary_email || '').trim().toLowerCase()).filter(Boolean));
-                const phones = new Set(group.records.map(r => String(r.nominee_phone || r.whatsapp_contact || r.other_contact || '').replace(/\\D/g, '')).filter(Boolean));
+                const phones = new Set(group.records.map(r => String(r.nominee_phone || r.whatsapp_contact || r.other_contact || '').replace(/\D/g, '')).filter(Boolean));
                 const categories = [...new Set(group.records.map(r => String(r.category || '').trim()).filter(Boolean))];
                 const identityNote = emails.size > 1 || phones.size > 1
                     ? '<span style="color:#b45309; font-size:11px;">Identity details vary — review before treating as one person</span>'
