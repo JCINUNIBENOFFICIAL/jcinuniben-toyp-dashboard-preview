@@ -1,0 +1,281 @@
+<!-- Content Management System -->
+<template>
+
+    <div class="view-header">
+
+        <div>
+            <h1>Content Management</h1>
+            <p>Manage the public TOYP portal without editing code.</p>
+        </div>
+
+        <div class="header-actions">
+
+            <button class="view-btn" id="preview-site">
+                <i class='bx bx-show'></i>
+                Preview Website
+            </button>
+
+            <button class="btn-primary" id="publish-all-btn">
+                <i class='bx bx-cloud-upload'></i>
+                Publish Changes
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ================================= -->
+    <!-- Tabs -->
+    <!-- ================================= -->
+
+    <div class="card" style="margin-bottom:25px;">
+
+        <div class="tab-group">
+
+            <button class="tab-btn active"
+                data-tab="homepage">
+                Homepage
+            </button>
+
+            <button class="tab-btn"
+                data-tab="hero">
+                Hero Section
+            </button>
+
+            <button class="tab-btn"
+                data-tab="announcements">
+                Announcements
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ================================= -->
+    <!-- Homepage -->
+    <!-- ================================= -->
+
+    <div class="cms-tab active" id="homepage-tab">
+
+        <div class="card">
+
+            <h3>Homepage Content</h3>
+
+            <div style="margin-top:25px;display:flex;flex-direction:column;gap:20px;">
+
+                <div>
+
+                    <label class="modal-label">
+
+                        Homepage Title
+
+                    </label>
+
+                    <input
+                        id="homepage-title"
+                        type="text"
+                        value="JCI UNIBEN TOYP 2026">
+
+                </div>
+
+                <div>
+
+                    <label class="modal-label">
+
+                        About TOYP
+
+                    </label>
+
+                    <textarea
+                        rows="8"
+                        id="homepage-about"></textarea>
+
+                </div>
+
+                <div>
+
+                    <label class="modal-label">
+
+                        Footer Text
+
+                    </label>
+
+                    <textarea
+                        rows="3"
+                        id="footer-text"></textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================================= -->
+    <!-- Hero -->
+    <!-- ================================= -->
+
+    <div class="cms-tab" id="hero-tab">
+
+        <div class="card">
+
+            <h3>Hero Section</h3>
+
+            <div style="margin-top:25px;display:flex;flex-direction:column;gap:20px;">
+
+                <div>
+
+                    <label class="modal-label">
+
+                        Hero Heading
+
+                    </label>
+
+                    <input
+                        id="hero-title"
+                        type="text">
+
+                </div>
+
+                <div>
+
+                    <label class="modal-label">
+
+                        Hero Subtitle
+
+                    </label>
+
+                    <textarea
+                        rows="4"
+                        id="hero-subtitle"></textarea>
+
+                </div>
+
+                <div>
+
+                    <label class="modal-label">
+
+                        Primary Button Text
+
+                    </label>
+
+                    <input
+                        id="hero-button-text"
+                        type="text">
+
+                </div>
+
+                <div>
+
+                    <label class="modal-label">
+
+                        Hero Background Image
+
+                    </label>
+
+                    <input
+                        id="hero-image"
+                        type="file"
+                        accept="image/*">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================================= -->
+    <!-- Announcements -->
+    <!-- ================================= -->
+
+    <div class="cms-tab" id="announcements-tab">
+
+        <div class="card">
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+
+                <h3>Announcements</h3>
+
+                <button class="btn-primary"
+                    id="create-announcement">
+
+                    <i class='bx bx-plus'></i>
+
+                    New Announcement
+
+                </button>
+
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:15px;">
+
+                <input
+                    id="announcement-title"
+                    type="text"
+                    placeholder="Announcement Title">
+
+                <textarea
+                    rows="4"
+                    id="announcement-body"
+                    placeholder="Announcement body"></textarea>
+
+                <select id="announcement-status">
+
+                    <option value="published">
+                        Publish Immediately
+                    </option>
+
+                    <option value="draft">
+                        Save as Draft
+                    </option>
+
+                </select>
+
+                <button
+                    class="btn-primary"
+                    id="save-announcement">
+
+                    <i class='bx bx-send'></i>
+
+                    Publish Announcement
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="card" style="margin-top:25px;">
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+
+                <h3>Published Announcements</h3>
+
+                <span id="announcement-count">
+
+                    0 Announcements
+
+                </span>
+
+            </div>
+
+            <div id="announcement-list">
+
+                <div class="empty-state">
+
+                    <i class='bx bx-news'></i>
+
+                    <p>No announcements published.</p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</template>

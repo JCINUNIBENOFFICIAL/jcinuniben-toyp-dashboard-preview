@@ -1,0 +1,17 @@
+.vscode/
+node_modules/
+package-lock.json
+.github/
+
+# environment and secret files
+.env
+databaseCredentials.json
+
+static/config.js
+.vercel
+
+
+
+Resend API Key: ${RESEND_API_KEY}
+
+Edge Function Endpoint: https://xbrndlhzaluksjhdbnur.supabase.co/functions/v1/send-finalist-emails

@@ -1,0 +1,77 @@
+<template>
+    <div class="view-header">
+        <div>
+            <h1>Nominee & Finalist Management</h1>
+            <p>Manage nominees and advance finalists per category.</p>
+        </div>
+        <div class="header-actions">
+            <button class="view-btn" id="refresh-finalists">
+                <i class='bx bx-refresh'></i> Refresh
+            </button>
+            <!-- ===== NEW: Send Invitations Button ===== -->
+            <button class="btn-primary" id="send-invitations-btn" 
+                    style="background: #16a34a; border: none;">
+                <i class='bx bx-envelope'></i> Send Invitations
+            </button>
+            <!-- ===== EXISTING: Finalize & Notify Button ===== -->
+            <button class="btn-primary" id="finalize-notify-btn" disabled
+                    title="All categories must have at least one finalist before finalizing.">
+                <i class='bx bx-lock-alt'></i> Finalize & Notify
+            </button>
+            <!-- Add this inside the header-actions div -->
+<button class="view-btn" id="test-invite-btn" 
+        style="background: #8b5cf6; color: white; border: none;">
+    <i class='bx bx-test-tube'></i> Test Invite
+</button>
+        </div>
+    </div>
+
+    <!-- Category Cards -->
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">Categories</h3>
+        <div id="category-cards-container" class="category-cards-grid">
+            <!-- dynamically filled -->
+        </div>
+    </div>
+
+    <!-- Master Finalist Table -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3>Current Finalists</h3>
+            <span id="finalist-count-badge" class="status-badge" style="background: var(--jci-blue); color: white;">0</span>
+        </div>
+        <div class="table-responsive">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="font-size: 11px; color: var(--text-muted); border-bottom: 2px solid var(--bg-slate);">
+                        <th style="padding: 12px;">NOMINEE</th>
+                        <th style="padding: 12px;">CATEGORY</th>
+                        <th style="padding: 12px;">VOTES</th>
+                        <th style="padding: 12px;">FLAGGED</th>
+                        <th style="padding: 12px;">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="finalist-table-body">
+                    <tr><td colspan="5" style="padding:15px; text-align:center; color:var(--text-muted);">Loading finalists…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- WhatsApp Panel (hidden by default) -->
+    <div class="card" id="whatsapp-panel" style="display: none; margin-top: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3>Send WhatsApp Notifications</h3>
+            <button class="view-btn" id="close-whatsapp-panel"><i class='bx bx-x'></i> Close</button>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <label style="font-weight: 600; display: block; margin-bottom: 4px;">Personalized Message Template</label>
+            <textarea id="whatsapp-message-template" rows="3" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;">
+Hello {name}, congratulations! You have been selected as a finalist for the TOYP 2026 Awards. Please check your email for further instructions.</textarea>
+            <small style="color: var(--text-muted);">Use <code>{name}</code> as placeholder for the nominee's name.</small>
+        </div>
+        <div id="whatsapp-list-container" style="max-height: 400px; overflow-y: auto;">
+            <!-- List of finalists with send buttons will be inserted here -->
+        </div>
+    </div>
+</template>
