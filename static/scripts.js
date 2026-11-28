@@ -2561,37 +2561,62 @@ function showNomineeGroupDetail(groupIndex) {
         categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
     });
 
-    const recordRows = group.records.map(record => {
-        const date = record.created_at ? new Date(record.created_at).toLocaleString() : 'Date unavailable';
+    const allNominationRows = window.__ALL_NOMINATIONS__ || [];
+    const idsWithLinkedChildren = new Set(allNominationRows
+        .map(record => Number(record.merged_into_id))
+        .filter(Number.isInteger));
+    const categories = Array.from(new Set(group.records.map(record =>
+        String(record.category || 'Unspecified category').trim() || 'Unspecified category'
+    )));
+    const categorySections = categories.map((category, categoryIndex) => {
+        const records = group.records.filter(record =>
+            (String(record.category || 'Unspecified category').trim() || 'Unspecified category') === category
+        );
+        const recordRows = records.map(record => {
+            const date = record.created_at ? new Date(record.created_at).toLocaleString() : 'Date unavailable';
+            const alreadyMerged = Boolean(record.merged_into_id);
+            return `
+                <tr>
+                    <td style="padding:10px;border-bottom:1px solid var(--bg-slate);">${escapeHTML(record.id)}</td>
+                    <td style="padding:10px;border-bottom:1px solid var(--bg-slate);">${escapeHTML(record.nominator_email || '—')}</td>
+                    <td style="padding:10px;border-bottom:1px solid var(--bg-slate);">${escapeHTML(record.nominee_email || record.primary_email || '—')}</td>
+                    <td style="padding:10px;border-bottom:1px solid var(--bg-slate);">${escapeHTML(record.status || '—')}</td>
+                    <td style="padding:10px;border-bottom:1px solid var(--bg-slate);">${escapeHTML(date)}</td>
+                    <td style="padding:10px;border-bottom:1px solid var(--bg-slate);">${alreadyMerged
+                        ? 'Linked to record #' + escapeHTML(record.merged_into_id)
+                        : '<label><input type="radio" name="merge-primary-' + categoryIndex + '" value="' + escapeHTML(record.id) + '"> Keep as primary</label>'}</td>
+                    <td style="padding:10px;border-bottom:1px solid var(--bg-slate);">${!alreadyMerged
+                        ? (idsWithLinkedChildren.has(Number(record.id))
+                            ? '<span title="This record already has linked records and cannot be moved under another primary.">Already has linked records</span>'
+                            : '<label><input type="checkbox" class="merge-source-record" data-category-index="' + categoryIndex + '" value="' + escapeHTML(record.id) + '"> Merge into primary</label>')
+                        : '—'}</td>
+                    <td style="padding:10px;border-bottom:1px solid var(--bg-slate);"><button class="view-btn view-nomination-detail-btn" data-nomination-id="${escapeHTML(record.id)}">Details</button></td>
+                </tr>`;
+        }).join('');
         return `
-            <tr>
-                <td style="padding:10px; border-bottom:1px solid var(--bg-slate);">${escapeHTML(record.id)}</td>
-                <td style="padding:10px; border-bottom:1px solid var(--bg-slate);">${escapeHTML(record.category || '—')}</td>
-                <td style="padding:10px; border-bottom:1px solid var(--bg-slate);">${escapeHTML(record.nominator_email || '—')}</td>
-                <td style="padding:10px; border-bottom:1px solid var(--bg-slate);">${escapeHTML(record.nominee_email || record.primary_email || '—')}</td>
-                <td style="padding:10px; border-bottom:1px solid var(--bg-slate);">${escapeHTML(record.status || '—')}</td>
-                <td style="padding:10px; border-bottom:1px solid var(--bg-slate);">${escapeHTML(date)}</td>
-                <td style="padding:10px; border-bottom:1px solid var(--bg-slate);"><button class="view-btn view-nomination-detail-btn" data-nomination-id="${escapeHTML(record.id)}">Details</button></td>
-            </tr>`;
+            <section style="margin-bottom:18px;padding:12px;border:1px solid var(--border-color);border-radius:8px;">
+                <h4 style="margin:0 0 8px;">${escapeHTML(category)} <small style="color:var(--text-muted);font-weight:400;">(${records.length} records)</small></h4>
+                <div class="table-responsive">
+                    <table style="width:100%;min-width:920px;border-collapse:collapse;text-align:left;">
+                        <thead><tr style="font-size:11px;color:var(--text-muted);">
+                            <th style="padding:10px;">RECORD ID</th><th style="padding:10px;">NOMINATOR</th><th style="padding:10px;">NOMINEE EMAIL</th><th style="padding:10px;">STATUS</th><th style="padding:10px;">SUBMITTED</th><th style="padding:10px;">PRIMARY RECORD</th><th style="padding:10px;">DUPLICATE RECORD</th><th style="padding:10px;">DETAILS</th>
+                        </tr></thead>
+                        <tbody>${recordRows}</tbody>
+                    </table>
+                </div>
+                <button class="btn-primary execute-nomination-merge-btn" data-category-index="${categoryIndex}" style="margin-top:10px;" disabled title="Database migration has not been applied.">Merge disabled — database migration pending</button>
+            </section>`;
     }).join('');
 
     document.getElementById('modal-title').textContent = group.display;
-    document.getElementById('modal-subtitle').textContent = `${group.records.length} individual nomination records · records remain separate`;
+    document.getElementById('modal-subtitle').textContent = `${group.records.length} individual nomination records · originals are retained`;
     document.getElementById('modal-data').innerHTML = `
         <button class="view-btn back-to-groups-btn" style="margin-bottom:12px;"><i class='bx bx-arrow-back'></i> Back to groups</button>
-        <div style="padding:12px; background:var(--bg-slate); border-radius:8px; margin-bottom:14px;">
-            <strong>Nominations by category</strong>
-            <ul style="margin:8px 0 0 18px;">${Array.from(categoryCounts.entries()).map(([category, count]) => `<li>${escapeHTML(category)}: ${count}</li>`).join('')}</ul>
-            <p style="font-size:12px; color:var(--text-muted); margin:8px 0 0;">This is a name-based grouping, not a confirmed identity merge. Check contact details and individual records before drawing conclusions.</p>
+        <div style="padding:12px;background:var(--bg-slate);border-radius:8px;margin-bottom:14px;">
+            <strong>Review before merging</strong>
+            <p style="font-size:12px;color:var(--text-muted);margin:8px 0 0;">Name matching is only a suggestion, not proof of identity. Compare nominee email, phone, profile and nomination details. For each category, choose one primary record and tick only records confirmed to belong to the same person. Merging links records and preserves their original nomination details and vote history; it does not delete them.</p>
         </div>
-        <div class="table-responsive">
-            <table style="width:100%; min-width:850px; border-collapse:collapse; text-align:left;">
-                <thead><tr style="font-size:11px; color:var(--text-muted);">
-                    <th style="padding:10px;">RECORD ID</th><th style="padding:10px;">CATEGORY</th><th style="padding:10px;">NOMINATOR</th><th style="padding:10px;">NOMINEE EMAIL</th><th style="padding:10px;">STATUS</th><th style="padding:10px;">SUBMITTED</th><th style="padding:10px;">ACTION</th>
-                </tr></thead>
-                <tbody>${recordRows}</tbody>
-            </table>
-        </div>`;
+        ${categorySections}`;
 }
 
 // Legacy merge functions are intentionally retained but are not exposed or callable from the UI.
@@ -2802,6 +2827,20 @@ if (e.target.classList.contains('view-nominee-finalist') || e.target.closest('.v
         // Open read-only multiple-nomination tracking
         if (e.target.closest('#show-merge-suggestions-btn')) {
             showMultipleNominations();
+            return;
+        }
+
+        // Refresh the tracking groups from the latest read-only nomination fetch.
+        if (e.target.closest('.refresh-groups-btn')) {
+            await loadNominations();
+            showMultipleNominations();
+            return;
+        }
+
+        // Preview-only safety: selection can be tested, but no nomination merge can be submitted.
+        if (e.target.closest('.execute-nomination-merge-btn')) {
+            e.preventDefault();
+            alert('Merging is disabled in this preview. The database migration has not been applied or approved.');
             return;
         }
 
