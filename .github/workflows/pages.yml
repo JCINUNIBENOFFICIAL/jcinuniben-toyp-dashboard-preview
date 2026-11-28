@@ -24,9 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload dashboard preview artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: .
+          name: dashboard-preview-pages
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: dashboard-preview-pages
